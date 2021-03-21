@@ -18,6 +18,9 @@ async function makeTrade(
     trader,
     ethers
   );
+  if (tokens_with_balance.length === 0) {
+    throw "Account doesn't have any balance in any of the provided token";
+  }
 
   const { token: sell_token, balance: sell_balance } = selectRandom(
     tokens_with_balance
