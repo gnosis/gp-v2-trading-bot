@@ -17,8 +17,6 @@ import fetch from "node-fetch";
 import { Api } from "./api";
 import { Chain, ChainUtils, selectRandom, toERC20 } from "./utils";
 
-// TODO: How do I get this address from the repo?
-const SETTLEMENT_ADDRESS = "0x4E608b7Da83f8E9213F554BDAA77C72e125529d0";
 const MAX_ALLOWANCE = BigNumber.from(2).pow(256).sub(1);
 
 export async function makeTrade(
@@ -71,7 +69,13 @@ export async function makeTrade(
     } for ${buyAmount} of ${buyToken.name} with a ${fee.toString()} fee`
   );
 
-  await giveAllowanceIfNecessary(sellToken, sellBalance, trader, ethers);
+  await giveAllowanceIfNecessary(
+    sellToken,
+    sellBalance,
+    trader,
+    GPv2Settlement[chain].address,
+    ethers
+  );
 
   const order = createOrder(
     sellToken,
@@ -174,12 +178,13 @@ async function giveAllowanceIfNecessary(
   sellToken: TokenInfo,
   sellAmount: BigNumber,
   trader: SignerWithAddress,
+  settlement: string,
   ethers: HardhatEthersHelpers
 ) {
   const erc20 = await toERC20(sellToken.address, ethers);
-  const allowance = await erc20.allowance(trader.address, SETTLEMENT_ADDRESS);
+  const allowance = await erc20.allowance(trader.address, settlement);
   if (allowance.lt(sellAmount)) {
-    await erc20.connect(trader).approve(SETTLEMENT_ADDRESS, MAX_ALLOWANCE);
+    await erc20.connect(trader).approve(settlement, MAX_ALLOWANCE);
     console.log(`Successfully set allowance for ${sellToken.name}`);
   }
 }
