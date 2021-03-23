@@ -1,30 +1,30 @@
+import { concat, hexlify, hexValue } from "@ethersproject/bytes";
 import {
   OrderKind,
   Order,
-  signOrder,
+  signOrder as signOrderGP,
   SigningScheme,
   domain,
 } from "@gnosis.pm/gp-v2-contracts";
+import { GPv2Settlement } from "@gnosis.pm/gp-v2-contracts/networks.json";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types";
-import ERC20 from "@openzeppelin/contracts/build/contracts/ERC20.json";
 import { TokenInfo, TokenList } from "@uniswap/token-lists";
-import { BigNumber, Contract, ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import fetch from "node-fetch";
 
 import { Api } from "./api";
+import { Chain, ChainUtils, selectRandom, toERC20 } from "./utils";
 
 export async function makeTrade(
   tokenListUrl: string,
   { ethers, network }: HardhatRuntimeEnvironment
 ): Promise<void> {
   const [trader] = await ethers.getSigners();
-  if (!network.config.chainId) {
-    throw "Network doesn't expose a chainId";
-  }
+  const chain = ChainUtils.fromNetwork(network);
 
-  const allTokens = await fetchTokenList(tokenListUrl, network.config.chainId);
+  const allTokens = await fetchTokenList(tokenListUrl, chain);
   const tokensWithBalance = await filterTokensWithBalance(
     allTokens,
     trader,
@@ -74,18 +74,7 @@ export async function makeTrade(
     buyAmount,
     fee
   );
-  const signature = await signOrder(
-    domain(
-      network.config.chainId,
-      // TODO: How do I get this address from the repo?
-      "0x4E608b7Da83f8E9213F554BDAA77C72e125529d0"
-    ),
-    order,
-    trader,
-    // TODO: TypedData does not seem to work with the ethers provider
-    SigningScheme.MESSAGE
-  );
-
+  const signature = await signOrder(order, chain, trader);
   const uid = await api.placeOrder(order, signature);
   console.log(`Successfully placed order with uid: ${uid}`);
 }
@@ -97,11 +86,6 @@ async function fetchTokenList(
   const response = await fetch(tokenListUrl);
   const list: TokenList = await response.json();
   return list.tokens.filter((token) => token.chainId === chainId);
-}
-
-function selectRandom<T>(list: T[]): T {
-  const index = Math.floor(Math.random() * list.length);
-  return list[index];
 }
 
 interface TokenAndBalance {
@@ -130,22 +114,11 @@ async function filterTokensWithBalance(
   });
 }
 
-async function toERC20(
-  address: string,
-  ethers: HardhatEthersHelpers
-): Promise<Contract> {
-  return new Contract(address, ERC20.abi, ethers.provider);
-}
-
+const keccak = ethers.utils.id;
 // Using the most significant 4 bytes of a unique phrase's hash. TODO: use full hash after SC upgrade.
 const APP_DATA = parseInt(
   ethers.utils.hexDataSlice(keccak("GPv2 Trading Bot"), 0, 4)
 );
-
-function keccak(message: string) {
-  const utf8Encoder = new TextEncoder();
-  return ethers.utils.keccak256(utf8Encoder.encode(message));
-}
 
 function createOrder(
   sellToken: TokenInfo,
@@ -169,4 +142,24 @@ function createOrder(
     kind: OrderKind.SELL,
     partiallyFillable: false,
   };
+}
+
+async function signOrder(
+  order: Order,
+  chain: Chain,
+  signer: SignerWithAddress
+): Promise<string> {
+  const signature = await signOrderGP(
+    domain(chain, GPv2Settlement[chain].address),
+    order,
+    signer,
+    SigningScheme.MESSAGE
+  );
+
+  // signOrderGP doesn't encode the signing scheme (MESSAGE requires MSB to be 1)
+  // We therefore encode it manually.
+  // TODO: no longer necessary as soon as we upgrade the SmartContracts
+  const parts = ethers.utils.splitSignature(signature);
+  parts.v = parts.v | 0x80;
+  return hexlify(concat([parts.r, parts.s, hexValue(parts.v)]));
 }

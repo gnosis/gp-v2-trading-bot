@@ -1,5 +1,5 @@
-import { BigNumber } from "@ethersproject/bignumber";
 import { Order, OrderKind } from "@gnosis.pm/gp-v2-contracts";
+import { BigNumber } from "ethers";
 import fetch, { RequestInit } from "node-fetch";
 
 export class Api {
@@ -9,7 +9,7 @@ export class Api {
     this.network = network;
   }
 
-  async call<T>(route: string, init?: RequestInit): Promise<T> {
+  private async call<T>(route: string, init?: RequestInit): Promise<T> {
     const url = `https://protocol-${this.network}.dev.gnosisdev.com/api/v1/${route}`;
     const response = await fetch(url, init);
     const body = await response.json();
