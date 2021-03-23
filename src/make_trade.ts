@@ -6,7 +6,10 @@ import {
   SigningScheme,
   domain,
 } from "@gnosis.pm/gp-v2-contracts";
-import { GPv2Settlement } from "@gnosis.pm/gp-v2-contracts/networks.json";
+import {
+  GPv2Settlement,
+  GPv2AllowanceManager,
+} from "@gnosis.pm/gp-v2-contracts/networks.json";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types";
 import { TokenInfo, TokenList } from "@uniswap/token-lists";
@@ -73,7 +76,7 @@ export async function makeTrade(
     sellToken,
     sellBalance,
     trader,
-    GPv2Settlement[chain].address,
+    GPv2AllowanceManager[chain].address,
     ethers
   );
 
@@ -178,13 +181,13 @@ async function giveAllowanceIfNecessary(
   sellToken: TokenInfo,
   sellAmount: BigNumber,
   trader: SignerWithAddress,
-  settlement: string,
+  allowanceManager: string,
   ethers: HardhatEthersHelpers
 ) {
   const erc20 = await toERC20(sellToken.address, ethers);
-  const allowance = await erc20.allowance(trader.address, settlement);
+  const allowance = await erc20.allowance(trader.address, allowanceManager);
   if (allowance.lt(sellAmount)) {
-    await erc20.connect(trader).approve(settlement, MAX_ALLOWANCE);
+    await erc20.connect(trader).approve(allowanceManager, MAX_ALLOWANCE);
     console.log(`Successfully set allowance for ${sellToken.name}`);
   }
 }
