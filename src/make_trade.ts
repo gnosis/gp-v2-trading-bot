@@ -6,7 +6,7 @@ import { BigNumber, Contract } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import fetch from "node-fetch";
 
-async function makeTrade(
+export async function makeTrade(
   tokenListUrl: string,
   { ethers, network }: HardhatRuntimeEnvironment
 ): Promise<void> {
@@ -15,26 +15,26 @@ async function makeTrade(
     throw "Network doesn't expose a chainId";
   }
 
-  const all_tokens = await fetchTokenList(tokenListUrl, network.config.chainId);
-  const tokens_with_balance = await tokensWithBalance(
-    all_tokens,
+  const allTokens = await fetchTokenList(tokenListUrl, network.config.chainId);
+  const tokensWithBalance = await filterTokensWithBalance(
+    allTokens,
     trader,
     ethers
   );
-  if (tokens_with_balance.length === 0) {
+  if (tokensWithBalance.length === 0) {
     throw "Account doesn't have any balance in any of the provided token";
   }
 
-  const { token: sell_token, balance: sell_balance } = selectRandom(
-    tokens_with_balance
+  const { token: sellToken, balance: sellBalance } = selectRandom(
+    tokensWithBalance
   );
-  const buy_token = selectRandom(
-    all_tokens.filter((token) => sell_token !== token)
+  const buyToken = selectRandom(
+    allTokens.filter((token) => sellToken !== token)
   );
 
   console.log(
-    `Selling ${sell_balance.toString()} of ${sell_token.name} for ${
-      buy_token.name
+    `Selling ${sellBalance.toString()} of ${sellToken.name} for ${
+      buyToken.name
     }`
   );
 }
@@ -58,14 +58,14 @@ interface TokenAndBalance {
   balance: BigNumber;
 }
 
-async function tokensWithBalance(
-  all_tokens: TokenInfo[],
+async function filterTokensWithBalance(
+  allTokens: TokenInfo[],
   trader: SignerWithAddress,
   ethers: HardhatEthersHelpers
 ): Promise<TokenAndBalance[]> {
   return (
     await Promise.all(
-      all_tokens.map(async (token) => {
+      allTokens.map(async (token) => {
         const erc20 = await toERC20(token.address, ethers);
         const balance: BigNumber = await erc20.balanceOf(trader.address);
         return {
@@ -85,5 +85,3 @@ async function toERC20(
 ): Promise<Contract> {
   return new Contract(address, ERC20.abi, ethers.provider);
 }
-
-export { makeTrade };
