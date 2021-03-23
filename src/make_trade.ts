@@ -8,11 +8,14 @@ import fetch from "node-fetch";
 
 async function makeTrade(
   tokenListUrl: string,
-  { ethers }: HardhatRuntimeEnvironment
+  { ethers, network }: HardhatRuntimeEnvironment
 ): Promise<void> {
   const [trader] = await ethers.getSigners();
+  if (!network.config.chainId) {
+    throw "Network doesn't expose a chainId";
+  }
 
-  const all_tokens = (await fetchTokenList(tokenListUrl)).tokens;
+  const all_tokens = await fetchTokenList(tokenListUrl, network.config.chainId);
   const tokens_with_balance = await tokensWithBalance(
     all_tokens,
     trader,
@@ -36,9 +39,13 @@ async function makeTrade(
   );
 }
 
-async function fetchTokenList(tokenListUrl: string): Promise<TokenList> {
+async function fetchTokenList(
+  tokenListUrl: string,
+  chainId: number
+): Promise<TokenInfo[]> {
   const response = await fetch(tokenListUrl);
-  return await response.json();
+  const list: TokenList = await response.json();
+  return list.tokens.filter((token) => token.chainId === chainId);
 }
 
 function selectRandom<T>(list: T[]): T {
