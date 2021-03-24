@@ -13,7 +13,7 @@ export class Api {
     const url = `https://protocol-${this.network}.dev.gnosisdev.com/api/v1/${route}`;
     const response = await fetch(url, init);
     const body = await response.json();
-    if (Math.floor(response.status / 100) !== 2) {
+    if (!response.ok) {
       throw `Calling "${url} ${JSON.stringify(init)} failed with ${
         response.status
       }: ${JSON.stringify(body)}`;
