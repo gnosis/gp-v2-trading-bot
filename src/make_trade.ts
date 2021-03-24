@@ -30,6 +30,8 @@ export async function makeTrade(
   const [trader] = await ethers.getSigners();
   const chain = ChainUtils.fromNetwork(network);
 
+  console.log(`Using account ${trader.address}`);
+
   const allTokens = await fetchTokenList(tokenListUrl, chain);
   const tokensWithBalance = await filterTokensWithBalance(
     allTokens,
