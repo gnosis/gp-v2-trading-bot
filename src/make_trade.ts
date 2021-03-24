@@ -1,4 +1,4 @@
-import { concat, hexlify, hexValue } from "@ethersproject/bytes";
+import { concat, hexlify, hexValue, hexZeroPad } from "@ethersproject/bytes";
 import {
   OrderKind,
   Order,
@@ -21,6 +21,7 @@ import { Api } from "./api";
 import { Chain, ChainUtils, selectRandom, toERC20 } from "./utils";
 
 const MAX_ALLOWANCE = ethers.constants.MaxUint256;
+const TRADE_TIMEOUT_SECONDS = 300;
 
 export async function makeTrade(
   tokenListUrl: string,
@@ -67,7 +68,7 @@ export async function makeTrade(
   );
 
   console.log(
-    `Selling ${sellAmountAfterFee.toString()} of ${
+    `🤹 Selling ${sellAmountAfterFee.toString()} of ${
       sellToken.name
     } for ${buyAmount} of ${buyToken.name} with a ${fee.toString()} fee`
   );
@@ -89,7 +90,25 @@ export async function makeTrade(
   );
   const signature = await signOrder(order, chain, trader);
   const uid = await api.placeOrder(order, signature);
-  console.log(`Successfully placed order with uid: ${uid}`);
+  console.log(`✅ Successfully placed order with uid: ${uid}`);
+
+  console.log(
+    `\n⏳ Waiting up to ${TRADE_TIMEOUT_SECONDS}s for trade event...`
+  );
+  const hasTraded = await waitForTrade(
+    GPv2Settlement[chain].address,
+    trader.address,
+    ethers
+  );
+  if (!hasTraded) {
+    throw `Order ${uid} wasn't traded in within timeout`;
+  }
+
+  const erc20 = await toERC20(buyToken.address, ethers);
+  const balance = await erc20.balanceOf(trader.address);
+  console.log(
+    `Trade was successful 🎉 ! New ${buyToken.name} balance: ${balance}`
+  );
 }
 
 async function fetchTokenList(
@@ -188,6 +207,30 @@ async function giveAllowanceIfNecessary(
   const allowance = await erc20.allowance(trader.address, allowanceManager);
   if (allowance.lt(sellAmount)) {
     await erc20.connect(trader).approve(allowanceManager, MAX_ALLOWANCE);
-    console.log(`Successfully set allowance for ${sellToken.name}`);
+    console.log(`✅ Successfully set allowance for ${sellToken.name}`);
   }
+}
+
+async function waitForTrade(
+  contract: string,
+  trader: string,
+  ethers: HardhatEthersHelpers
+): Promise<boolean> {
+  const filter = {
+    address: contract,
+    topics: [
+      keccak("Trade(address,address,address,uint256,uint256,uint256,bytes)"),
+      hexZeroPad(trader, 32),
+    ],
+  };
+
+  const traded = new Promise((resolve: (value: boolean) => void) => {
+    ethers.provider.on(filter, () => {
+      resolve(true);
+    });
+  });
+  const timeout = new Promise((resolve: (value: boolean) => void) => {
+    setTimeout(resolve, TRADE_TIMEOUT_SECONDS * 1000, false);
+  });
+  return await Promise.race([traded, timeout]);
 }
