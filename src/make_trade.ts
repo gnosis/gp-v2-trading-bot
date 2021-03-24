@@ -98,6 +98,7 @@ export async function makeTrade(
   const hasTraded = await waitForTrade(
     GPv2Settlement[chain].address,
     trader.address,
+    uid,
     ethers
   );
   if (!hasTraded) {
@@ -214,6 +215,7 @@ async function giveAllowanceIfNecessary(
 async function waitForTrade(
   contract: string,
   trader: string,
+  uid: string,
   ethers: HardhatEthersHelpers
 ): Promise<boolean> {
   const filter = {
@@ -225,8 +227,11 @@ async function waitForTrade(
   };
 
   const traded = new Promise((resolve: (value: boolean) => void) => {
-    ethers.provider.on(filter, () => {
-      resolve(true);
+    ethers.provider.on(filter, (log) => {
+      // Hacky way to verify that the UID is part of the event data
+      if (log.data.includes(uid.substring(2))) {
+        resolve(true);
+      }
     });
   });
   const timeout = new Promise((resolve: (value: boolean) => void) => {
