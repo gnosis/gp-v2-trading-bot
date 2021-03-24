@@ -20,7 +20,7 @@ import fetch from "node-fetch";
 import { Api } from "./api";
 import { Chain, ChainUtils, selectRandom, toERC20 } from "./utils";
 
-const MAX_ALLOWANCE = BigNumber.from(2).pow(256).sub(1);
+const MAX_ALLOWANCE = ethers.constants.MaxUint256;
 
 export async function makeTrade(
   tokenListUrl: string,
