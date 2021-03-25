@@ -31,7 +31,7 @@ const TRADE_TIMEOUT_SECONDS = 300;
 const { concat, hexlify, hexValue } = ethers.utils;
 
 export async function makeTrade(
-  tokenListUrl: string,
+  tokenListUrl: string | null,
   { ethers, network }: HardhatRuntimeEnvironment
 ): Promise<void> {
   const [trader] = await ethers.getSigners();
@@ -40,7 +40,10 @@ export async function makeTrade(
 
   console.log(`Using account ${trader.address}`);
 
-  const allTokens = await fetchTokenList(tokenListUrl, chain);
+  const allTokens = await fetchTokenList(
+    tokenListUrl || ChainUtils.defaultTokenList(chain),
+    chain
+  );
   const tokensWithBalance = await filterTradableTokens(
     allTokens,
     trader,
