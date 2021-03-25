@@ -1,4 +1,3 @@
-import { concat, hexlify, hexValue, hexZeroPad } from "@ethersproject/bytes";
 import {
   OrderKind,
   Order,
@@ -18,10 +17,18 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import fetch from "node-fetch";
 
 import { Api } from "./api";
-import { Chain, ChainUtils, selectRandom, toERC20 } from "./utils";
+import {
+  Chain,
+  ChainUtils,
+  selectRandom,
+  toERC20,
+  toSettlementContract,
+} from "./utils";
 
 const MAX_ALLOWANCE = ethers.constants.MaxUint256;
 const TRADE_TIMEOUT_SECONDS = 300;
+
+const { concat, hexlify, hexValue } = ethers.utils;
 
 export async function makeTrade(
   tokenListUrl: string,
@@ -220,16 +227,9 @@ async function waitForTrade(
   uid: string,
   ethers: HardhatEthersHelpers
 ): Promise<boolean> {
-  const filter = {
-    address: contract,
-    topics: [
-      keccak("Trade(address,address,address,uint256,uint256,uint256,bytes)"),
-      hexZeroPad(trader, 32),
-    ],
-  };
-
+  const settlement = await toSettlementContract(contract, ethers);
   const traded = new Promise((resolve: (value: boolean) => void) => {
-    ethers.provider.on(filter, (log) => {
+    ethers.provider.on(settlement.filters.Trade(trader), (log) => {
       // Hacky way to verify that the UID is part of the event data
       if (log.data.includes(uid.substring(2))) {
         resolve(true);
