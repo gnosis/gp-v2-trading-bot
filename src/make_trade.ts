@@ -41,7 +41,7 @@ export async function makeTrade(
   console.log(`Using account ${trader.address}`);
 
   const allTokens = await fetchTokenList(tokenListUrl, chain);
-  const tokensWithBalance = await filterTokensWithBalanceAndRoutesToBuyTokens(
+  const tokensWithBalance = await filterTradableTokens(
     allTokens,
     trader,
     ethers,
@@ -138,7 +138,7 @@ interface SellTokenCandidate {
   potentialBuyTokens: TokenInfo[];
 }
 
-async function filterTokensWithBalanceAndRoutesToBuyTokens(
+async function filterTradableTokens(
   allTokens: TokenInfo[],
   trader: SignerWithAddress,
   ethers: HardhatEthersHelpers,
