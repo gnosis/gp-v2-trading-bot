@@ -72,6 +72,7 @@ export async function makeTrade(
     } for ${buyAmount} of ${buyToken.name} with a ${fee.toString()} fee`
   );
 
+
   await giveAllowanceIfNecessary(
     sellToken,
     sellBalance,
