@@ -31,7 +31,7 @@ const TRADE_TIMEOUT_SECONDS = 300;
 const { concat, hexlify, hexValue } = ethers.utils;
 
 export async function makeTrade(
-  tokenListUrl: string | null,
+  tokenListUrl: string | undefined,
   { ethers, network }: HardhatRuntimeEnvironment
 ): Promise<void> {
   const [trader] = await ethers.getSigners();
@@ -51,7 +51,9 @@ export async function makeTrade(
     api
   );
   if (tokensWithBalance.length === 0) {
-    throw "Account doesn't have any balance in any of the provided token";
+    throw new Error(
+      "Account doesn't have any balance in any of the provided token"
+    );
   }
 
   const {
@@ -69,7 +71,7 @@ export async function makeTrade(
   );
 
   if (sellBalance.lte(fee)) {
-    throw "Account doesn't have enough balance to pay fee";
+    throw new Error("Account doesn't have enough balance to pay fee");
   }
 
   const sellAmountAfterFee = sellBalance.sub(fee);
@@ -116,7 +118,7 @@ export async function makeTrade(
     api
   );
   if (!hasTraded) {
-    throw `Order ${uid} wasn't traded in within timeout`;
+    throw new Error(`Order ${uid} wasn't traded in within timeout`);
   }
 
   const erc20 = await toERC20(buyToken.address, ethers);
