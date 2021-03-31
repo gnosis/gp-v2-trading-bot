@@ -196,12 +196,19 @@ async function getPotentialBuyTokens(
       continue;
     }
     try {
-      await api.getFee(
+      // Check that a fee path exists to the candidate
+      const fee = await api.getFee(
         sellToken.address,
         buyToken.address,
         amount,
         OrderKind.SELL
       );
+      if (fee.gte(amount)) {
+        // We won't have enough balance to pay the fee
+        continue;
+      }
+
+      // Check that a trade path exists to the candidate
       const fullProceeds = await api.estimateTradeAmount(
         sellToken.address,
         buyToken.address,
@@ -209,6 +216,7 @@ async function getPotentialBuyTokens(
         OrderKind.SELL
       );
 
+      // Check that the trade is not incurring to much slippage.
       // Until we have a spot price endpoint, we can only estimate the slippage by querying proceeds for a much smaller trade amount
       const fractionalAmount = amount.div(100);
       const fractionalProceeds = await api.estimateTradeAmount(
