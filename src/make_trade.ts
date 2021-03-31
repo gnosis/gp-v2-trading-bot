@@ -239,7 +239,6 @@ async function getPotentialBuyTokens(
       ) {
         continue;
       }
-      console.log(maxSlippageBps);
       potentialBuyTokens.push(buyToken);
     } catch {
       // ignoring tokens for which no fee path exists
