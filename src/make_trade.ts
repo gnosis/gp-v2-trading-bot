@@ -178,7 +178,7 @@ async function filterTradableTokens(
 async function getPotentialBuyTokens(
   sellToken: TokenInfo,
   candidates: TokenInfo[],
-  amount: BigNumber,
+  balance: BigNumber,
   maxSlippageBps: number,
   api: Api
 ): Promise<TokenInfo[]> {
@@ -192,10 +192,10 @@ async function getPotentialBuyTokens(
       const fee = await api.getFee(
         sellToken.address,
         buyToken.address,
-        amount,
+        balance,
         OrderKind.SELL
       );
-      if (fee.gte(amount)) {
+      if (fee.gte(balance)) {
         // We won't have enough balance to pay the fee
         continue;
       }
@@ -204,13 +204,13 @@ async function getPotentialBuyTokens(
       const fullProceeds = await api.estimateTradeAmount(
         sellToken.address,
         buyToken.address,
-        amount,
+        balance,
         OrderKind.SELL
       );
 
       // Check that the trade is not incurring to much slippage.
       // Until we have a spot price endpoint, we can only estimate the slippage by querying proceeds for a much smaller trade amount
-      const fractionalAmount = amount.div(100);
+      const fractionalAmount = balance.div(100);
       const fractionalProceeds = await api.estimateTradeAmount(
         sellToken.address,
         buyToken.address,
@@ -224,7 +224,7 @@ async function getPotentialBuyTokens(
       // too much slippage if (fractionalPrice / fullPrice > 1 + maxSlippageBps)
       if (
         fractionalProceeds
-          .mul(amount)
+          .mul(balance)
           .mul(10000)
           .div(fractionalAmount.mul(fullProceeds))
           .gt(BigNumber.from(10000 + maxSlippageBps))
