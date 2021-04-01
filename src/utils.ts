@@ -63,12 +63,10 @@ export async function toSettlementContract(
 }
 
 export class Signature {
-  signature: string;
-  signatureScheme: string;
-  constructor(signature: string, signatureScheme: string) {
-    this.signature = signature;
-    this.signatureScheme = signatureScheme;
-  }
+  constructor(
+    public readonly signature: string,
+    public readonly signatureScheme: string,
+  ) {}
 
   static async fromOrder(
     order: Order,
