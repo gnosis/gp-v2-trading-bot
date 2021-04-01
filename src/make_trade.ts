@@ -280,7 +280,7 @@ async function giveAllowanceIfNecessary(
     const tx = await erc20
       .connect(trader)
       .approve(allowanceManager, MAX_ALLOWANCE);
-    await tx.wait;
+    await tx.wait();
     console.log(`✅ Successfully set allowance for ${sellToken.name}`);
   }
 }
