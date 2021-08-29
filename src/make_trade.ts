@@ -202,10 +202,11 @@ async function getFirstBuyToken(
         OrderKind.SELL
       );
       if (fee.gte(balance)) {
-        // We won't have enough balance to pay the fee
+        console.log(
+          `  [DEBUG] Selling ${sellToken.name} for ${buyToken.name}: Not enough balance to pay the fee`
+        );
         continue;
       }
-
       // Check that a trade path exists to the candidate
       const fullProceeds = await api.estimateTradeAmount(
         sellToken.address,
@@ -235,6 +236,9 @@ async function getFirstBuyToken(
           .div(fractionalAmount.mul(fullProceeds))
           .gt(BigNumber.from(10000 + maxSlippageBps))
       ) {
+        console.log(
+          `  [DEBUG] Selling ${sellToken.name} for ${buyToken.name}: Too much slippage`
+        );
         continue;
       }
       return buyToken;
