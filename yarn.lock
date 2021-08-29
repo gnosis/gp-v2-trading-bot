@@ -665,11 +665,6 @@
   dependencies:
     "@types/node" "*"
 
-"@types/shuffle-array@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@types/shuffle-array/-/shuffle-array-1.0.1.tgz#5453d202afbff237ff2499909cb78822e888681c"
-  integrity sha512-UrWSvWSoxfdibWBpzJbBbwkzjHj9i0uy9a/XZ+73q42/MV9+p7ECA/yKx6rBimgoW9Tua7HVpzUOmrnk+dvc9w==
-
 "@types/yargs-parser@*":
   version "20.2.0"
   resolved "https://registry.yarnpkg.com/@types/yargs-parser/-/yargs-parser-20.2.0.tgz#dd3e6699ba3237f0348cd085e4698780204842f9"
@@ -3340,11 +3335,6 @@ shebang-regex@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/shebang-regex/-/shebang-regex-3.0.0.tgz#ae16f1644d873ecad843b0307b143362d4c42172"
   integrity sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==
-
-shuffle-array@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/shuffle-array/-/shuffle-array-1.0.1.tgz#c4ff3cfe74d16f93730592301b25e6577b12898b"
-  integrity sha1-xP88/nTRb5NzBZIwGyXmV3sSiYs=
 
 side-channel@^1.0.4:
   version "1.0.4"

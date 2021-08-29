@@ -9,12 +9,12 @@ import { TokenInfo, TokenList } from "@uniswap/token-lists";
 import { BigNumber, ethers } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import fetch from "node-fetch";
-import shuffle from "shuffle-array";
 
 import { Api } from "./api";
 import {
   ChainUtils,
   selectRandom,
+  shuffle,
   Signature,
   toERC20,
   toSettlementContract,
