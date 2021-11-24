@@ -81,35 +81,30 @@ export async function makeTrade(
     ethers
   );
 
-  const { feeAmount, sellAmount, buyAmount } = await getQuote(
+  const order = await getQuote(
     api,
     sellToken.address,
     buyToken.address,
     sellBalance,
     trader.address
   );
+  // Apply slippage
+  order.buyAmount = BigNumber.from(order.buyAmount).mul(995).div(1000);
 
   // This should rarely happen as we only select buy tokens for which fee was sufficient
   // in the first place. Only if approval took a long time and gas prices increased significantly
   // this could be an issue.
-  if (sellBalance.lte(feeAmount)) {
+  if (sellBalance.lte(order.feeAmount)) {
     throw new Error("Account doesn't have enough balance to pay fee");
   }
 
-  const prettySellAmount = formatAmount(sellAmount, sellToken);
-  const prettyBuyAmount = formatAmount(buyAmount, buyToken);
-  const prettyFee = formatAmount(feeAmount, sellToken);
+  const prettySellAmount = formatAmount(order.sellAmount, sellToken);
+  const prettyBuyAmount = formatAmount(order.buyAmount, buyToken);
+  const prettyFee = formatAmount(order.feeAmount, sellToken);
   console.log(
     `🤹 Selling ${prettySellAmount} of ${sellToken.name} for ${prettyBuyAmount} of ${buyToken.name} with a ${prettyFee} fee`
   );
 
-  const order = createOrder(
-    sellToken,
-    buyToken,
-    sellAmount,
-    buyAmount,
-    feeAmount
-  );
   const signature = await signOrder(
     domain(chain, GPv2Settlement[chain].address),
     order,
@@ -388,27 +383,6 @@ async function getFirstBuyToken(
 
 const keccak = ethers.utils.id;
 const APP_DATA = keccak("GPv2 Trading Bot");
-
-function createOrder(
-  sellToken: TokenInfo,
-  buyToken: TokenInfo,
-  sellAmountAfterFee: BigNumberish,
-  buyAmount: BigNumberish,
-  fee: BigNumberish
-): Order {
-  return {
-    sellToken: sellToken.address,
-    buyToken: buyToken.address,
-    sellAmount: sellAmountAfterFee,
-    // add 0.5 % slippage
-    buyAmount: BigNumber.from(buyAmount).mul(995).div(1000),
-    validTo: validTo(),
-    appData: APP_DATA,
-    feeAmount: fee,
-    kind: OrderKind.SELL,
-    partiallyFillable: false,
-  };
-}
 
 async function giveAllowanceIfNecessary(
   sellToken: TokenInfo,
