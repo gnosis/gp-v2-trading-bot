@@ -1,3 +1,5 @@
+**:warning: The team that worked on this project has spun out of Gnosis and continues development on a forked repo (01-04-2022) which is available here <https://github.com/cowprotocol/trading-bot>**
+
 # gp-v2-trading-bot
 
 [![Node.js CI](https://github.com/gnosis/gp-v2-trading-bot/actions/workflows/CI.yml/badge.svg)](https://github.com/gnosis/gp-v2-trading-bot/actions/workflows/CI.yml)
